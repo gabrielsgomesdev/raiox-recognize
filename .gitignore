@@ -1,0 +1,31 @@
+# Ignore all .log files
+*.log
+
+# Ignore a specific file named "debug.log"
+debug.log
+
+# Ignore the entire "temp" directory
+temp/
+
+# Ignore all files within the "build" directory
+build/*
+
+# Ignore all files with the .tmp extension in any directory
+**/*.tmp
+
+# Ignore the "node_modules" directory, commonly used in JavaScript projects
+node_modules/
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore personal configuration files not meant for the repository
+config.local.ini
+
+# Exclude a specific file within an ignored directory
+# (Note: This only works if the directory itself is not ignored with a trailing slash,
+# or if the directory is matched by a pattern without a trailing slash.)
+!temp/important.txt
+
+.env
