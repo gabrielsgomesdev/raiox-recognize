@@ -4,23 +4,31 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc",
+    "start:watcher": "node --enable-source-maps dist/watcher.js",
+    "start:server": "node --enable-source-maps dist/server.js",
+    "dev:watcher": "ts-node-esm src/watcher.ts",
+    "dev:server": "ts-node-esm src/server.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@supabase/supabase-js": "^2.57.4",
     "axios": "^1.11.0",
     "chokidar": "^4.0.3",
+    "csv-parser": "^3.2.0",
     "dotenv": "^17.2.2",
+    "fastify": "^5.6.0",
     "mime-types": "^3.0.1",
     "openai": "^5.20.0",
     "sharp": "^0.34.3"
   },
   "devDependencies": {
     "@types/mime-types": "^3.0.1",
-    "@types/node": "^24.3.1",
+    "@types/node": "^24.4.0",
+    "ts-node": "^10.9.2",
     "tsx": "^4.20.5",
     "typescript": "^5.9.2"
   }
