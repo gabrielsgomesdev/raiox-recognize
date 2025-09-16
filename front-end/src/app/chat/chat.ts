@@ -3,9 +3,8 @@ import { UploadService } from '../services/uploadService';
 
 @Component({
   selector: 'app-chat',
-  imports: [],
   templateUrl: './chat.html',
-  styleUrl: './chat.css'
+  styleUrls: ['./chat.css']
 })
 export class Chat {
   file: File | null = null;
@@ -19,10 +18,28 @@ export class Chat {
 
   enviarArquivo() {
     if (!this.file) return;
-    this.uploadService.uploadFile(this.file).subscribe(() => {
-      this.uploadService.getResposta((text) => {
-        this.resposta += text;
-      });
+
+    this.resposta = '⏳ Enviando arquivo...\n';
+
+    this.uploadService.uploadFile(this.file).subscribe({
+      next: (res: any) => {
+        this.resposta = '✅ Arquivo enviado! Processamento concluído:\n\n';
+
+        // Se res.result for objeto, formatamos de forma legível
+        if (res.result && typeof res.result === 'object') {
+          for (const [key, value] of Object.entries(res.result)) {
+            this.resposta += `${key}: ${JSON.stringify(value, null, 2)}\n`;
+          }
+        } else {
+          // Caso seja texto ou outro formato
+          this.resposta += res.result;
+        }
+
+        console.log('resposta: ', res)
+      },
+      error: (err) => {
+        this.resposta = `❌ Erro: ${err.error?.error || err.message}`;
+      }
     });
   }
 }
