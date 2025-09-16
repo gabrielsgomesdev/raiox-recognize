@@ -1,0 +1,10 @@
+<div class="content">
+    <div class="input">
+        <input type="file" class="input-file" (change)="onFileSelected($event)" />
+        <button class="button-enviar" (click)="enviarArquivo()">Enviar</button>
+    </div>
+
+    <div class="saida">
+        <pre>{{ resposta }}</pre>
+    </div>
+</div>

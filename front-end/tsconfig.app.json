@@ -8,7 +8,7 @@
   },
   "include": [
     "src/**/*.ts"
-  ],
+, "src/app/components/chat/chat.component"  ],
   "exclude": [
     "src/**/*.spec.ts"
   ]

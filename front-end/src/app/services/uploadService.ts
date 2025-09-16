@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 
 @Injectable({ providedIn: 'root' })
 export class UploadService {
-    private apiUrl = 'http://localhost:3000';
+    private apiUrl = 'https://cd03997a7eca.ngrok-free.app';
 
     constructor(private http: HttpClient) { }
 
