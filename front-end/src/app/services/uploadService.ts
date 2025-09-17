@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class UploadService {
-  public apiUrl = 'https://c1e05d83305d.ngrok-free.app'; // ou localhost:3000
+  public apiUrl = 'https://b13ec25562ba.ngrok-free.app'; // ou localhost:3000
 
   constructor(private http: HttpClient) { }
 
