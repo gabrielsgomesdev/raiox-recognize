@@ -15,6 +15,13 @@ export async function sendToN8n(filePath: string, description: string, hash: str
   const headers: Record<string, string> = { ...form.getHeaders() };
   if (SECRET) headers["X-Shared-Secret"] = SECRET;
 
-  const resp = await axios.post(N8N_URL, form, { headers, timeout: 30000 });
-  console.log("✅ n8n respondeu:", resp.status, resp.data);
+  console.log({
+    description,
+    sha256: hash,
+    receivedAt: new Date().toISOString(),
+    fileName: filePath.split("/").pop(),
+  });
+
+  // const resp = await axios.post(N8N_URL, form, { headers, timeout: 30000 });
+  // console.log("✅ n8n respondeu:", resp.status, resp.data);
 }

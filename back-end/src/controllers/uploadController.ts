@@ -1,46 +1,32 @@
-import FormData from "form-data";
-import fetch from "node-fetch";
 import { FastifyReply, FastifyRequest } from "fastify";
-import fs from "fs";
-import { handleImageUpload } from "../services/imagesService.js";
+import { analyzeImageWithOpenAI, CasoSimilar, fetchSimilarCasesLocal, normalizeConfidenceData, runAIAgent } from "../services/analiseService.js";
 
 export async function uploadImage(req: FastifyRequest, reply: FastifyReply) {
   try {
-    const data = await req.file();
-    if (!data) return reply.code(400).send({ error: "Nenhum arquivo enviado" });
+    const file = await req.file();
 
-    // 1️⃣ Salva o arquivo localmente
-    const filePath = await handleImageUpload(data.filename, data.file);
-    console.log("✅ Arquivo salvo localmente:", filePath);
+    if (!file) return reply.code(400).send({ error: "Campo base64 é obrigatório" });
 
-    // 2️⃣ Cria FormData para n8n
-    const formData = new FormData();
-    formData.append("data", fs.createReadStream(filePath));
+    const chunks: Buffer[] = [];
+    for await (const chunk of file.file) chunks.push(chunk);
+    const buffer = Buffer.concat(chunks);
+    const base64 = `data:${file.mimetype};base64,${buffer.toString('base64')}`;
+    const analise = await analyzeImageWithOpenAI(base64, file.filename);
+    const similares = await fetchSimilarCasesLocal({ query: analise, k: 5, userInput: analise });
 
-    const n8nUrl = process.env.N8N_WEBHOOK_URL!;
-    console.log("🔗 URL do webhook n8n:", n8nUrl);
+    const similarCasesSummary: CasoSimilar[] = similares
+      .map((r) => ({
+        id: r.id,
+        description: r.description,
+        classificacao: r.classificacao,
+        localizacao: r.localizacao,
+        similarity: r.similarity,
+      }));
 
-    // 3️⃣ Chama o n8n e espera a resposta
-    const response = await fetch(n8nUrl, { method: "POST", body: formData });
-    console.log("📦 Response status:", response.status);
+    let relatorio = await runAIAgent(analise, similarCasesSummary);
+    relatorio = normalizeConfidenceData(relatorio);
 
-    // 4️⃣ Lê o corpo apenas uma vez
-    const text = await response.text();
-    let result: any;
-    try {
-      result = JSON.parse(text);
-      console.log("📥 Resultado n8n (JSON):", result);
-    } catch {
-      result = text;
-      console.log("📥 Resultado n8n (texto):", result);
-    }
-
-    // 5️⃣ Retorna para o frontend apenas após todo o fluxo
-    return reply.code(200).send({
-      message: "Processamento concluído",
-      result,
-    });
-
+    return reply.code(200).send({ message: "Análise concluída", result: relatorio });
   } catch (err: any) {
     console.error("❌ Erro uploadImage:", err);
     return reply.code(500).send({ error: err.message });
