@@ -26,14 +26,14 @@ export class Chat {
         this.resposta = '✅ Arquivo enviado! Processamento concluído:\n\n';
 
         // Se res.result for objeto, formatamos de forma legível
-        if (res.result && typeof res.result === 'object') {
-          for (const [key, value] of Object.entries(res.result)) {
-            this.resposta += `${key}: ${JSON.stringify(value, null, 2)}\n`;
-          }
-        } else {
-          // Caso seja texto ou outro formato
-          this.resposta += res.result;
-        }
+        // if (res.result && typeof res.result === 'object') {
+        //   for (const [key, value] of Object.entries(res.result)) {
+        //     this.resposta += `${key}: ${JSON.stringify(value, null, 2)}\n`;
+        //   }
+        // } else {
+        //   // Caso seja texto ou outro formato
+        //   this.resposta += res.result;
+        // }
 
         console.log('resposta: ', res)
       },
