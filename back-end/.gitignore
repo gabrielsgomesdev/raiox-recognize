@@ -1,3 +1,6 @@
+# Ignore distribution files
+dist/
+
 # Ignore all .log files
 *.log
 

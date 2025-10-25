@@ -7,7 +7,6 @@ import { openaiClient } from "../config/openai.js";
 import { embedImageDescription } from "./embeddingsService.js";
 import { supabase } from "../config/supabase.js";
 import { fileToDataUrl } from "../utils/fileUtils.js";
-import { sendToN8n } from "./n8nService.js";
 
 const pump = promisify(pipeline);
 
@@ -35,16 +34,13 @@ export async function processImage(filePath: string, processedDir: string) {
     embedding,
   });
 
-  // 🔥 Captura retorno do n8n
-  const n8nResp = await sendToN8n(filePath, description, hash);
-
   // Mover
   const dest = path.join(processedDir, fileName);
   await fsp.rename(filePath, dest);
 
   console.log("✅ Imagem processada:", fileName);
 
-  return n8nResp; // devolve pro backend → frontend
+  return { fileName, description, hash, embedding };
 }
 
 

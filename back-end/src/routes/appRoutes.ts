@@ -1,42 +1,26 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import fs from "fs";
-import FormData from "form-data";
-import axios from "axios";
 import { handleImageUpload } from "../services/imagesService.js";
 import { buscarSimilares } from "../services/embeddingsService.js";
 
 export async function appRoutes(fastify: FastifyInstance) {
-  // Upload de imagem e processamento no n8n
+  // Upload de imagem
   fastify.post("/upload", async (req: FastifyRequest, reply: FastifyReply) => {
     try {
       const data = await req.file();
       if (!data) return reply.code(400).send({ error: "Nenhum arquivo enviado" });
 
-      // 1. Salva o arquivo
+      // Salva o arquivo na pasta inbox
       const filePath = await handleImageUpload(data.filename, data.file);
 
-      // 2. Prepara o FormData
-      const formData = new FormData();
-      formData.append("data", fs.createReadStream(filePath));
-
-      const n8nUrl = process.env.N8N_WEBHOOK_URL!;
-
-      // 3. Faz POST para o n8n com axios
-      const response = await axios.post(n8nUrl, formData, {
-        headers: formData.getHeaders(),
-        timeout: 60000, // 1 minuto
-      });
-
-      console.log("📥 Resposta do n8n:", response.data);
-
-      // 4. Só responde pro front depois do n8n
+      // Retorna resposta imediata
+      // O processamento será feito pelo file watcher
       return reply.send({
-        message: "Processamento concluído",
-        result: response.data,
+        message: "Upload realizado com sucesso. O processamento será feito automaticamente.",
+        filePath,
       });
     } catch (err: any) {
-      console.error("❌ Erro em /upload:", err.response?.data || err.message);
-      return reply.code(500).send({ error: err.response?.data || err.message });
+      console.error("❌ Erro em /upload:", err.message);
+      return reply.code(500).send({ error: err.message });
     }
   });
 

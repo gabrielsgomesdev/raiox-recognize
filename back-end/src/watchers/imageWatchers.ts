@@ -5,7 +5,6 @@ import * as fsSync from "fs";
 import { fileToDataUrl } from "../utils/fileUtils.js";
 import { describeImage } from "../services/imagesService.js";
 import { embedImageDescription } from "../services/embeddingsService.js";
-import { sendToN8n } from "../services/n8nService.js";
 import { supabase } from "../config/supabase.js";
 
 const WATCH_DIR = process.env.WATCH_DIR || "./imagens-inbox";
@@ -48,10 +47,7 @@ export async function startWatcher() {
         });
         if (error) console.error("❌ Erro ao inserir no Supabase:", error);
 
-        // 5️⃣ Enviar para n8n
-        await sendToN8n(filePath, description, hash);
-
-        // 6️⃣ Mover imagem para pasta processadas
+        // 5️⃣ Mover imagem para pasta processadas
         const dest = path.join(PROCESSED_DIR, fileName);
         await fs.rename(filePath, dest);
         console.log("✅ Imagem processada:", fileName);
