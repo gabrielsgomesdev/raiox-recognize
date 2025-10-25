@@ -4,8 +4,8 @@ import path from "path";
 import { pipeline } from "stream";
 import { promisify } from "util";
 import { openaiClient } from "../config/openai.js";
-import { embedImageDescription } from "./embeddingsService.js";
-import { supabase } from "../config/supabase.js";
+import { embedImageDescription, analisarDiagnostico } from "./embeddingsService.js";
+import pool from "../config/database.js";
 import { fileToDataUrl } from "../utils/fileUtils.js";
 
 const pump = promisify(pipeline);
@@ -20,27 +20,72 @@ export async function handleImageUpload(filename: string, fileStream: NodeJS.Rea
   return filePath;
 }
 
-export async function processImage(filePath: string, processedDir: string) {
+export async function processImage(filePath: string, processedDir: string, pacienteId?: string) {
   const fileName = path.basename(filePath);
   const { dataUrl, hash } = await fileToDataUrl(filePath);
 
+  // 1. Generate description using OpenAI Vision
   const description = await describeImage(dataUrl);
+
+  // 2. Generate embedding from description
   const embedding = await embedImageDescription(description);
 
-  await supabase.from("imagens").insert({
-    file_name: fileName,
-    description,
-    sha256: hash,
-    embedding,
-  });
+  // 3. Analyze diagnosis by comparing with lesion catalog
+  const diagnostico = await analisarDiagnostico(embedding);
 
-  // Mover
+  // 4. Move to processed directory
   const dest = path.join(processedDir, fileName);
   await fsp.rename(filePath, dest);
 
-  console.log("✅ Imagem processada:", fileName);
+  // 5. Insert into PostgreSQL with diagnosis results
+  const query = `
+    INSERT INTO imagens (
+      paciente_id,
+      file_name,
+      file_path,
+      sha256,
+      description,
+      embedding,
+      classificacao_sugerida,
+      confianca,
+      lesoes_similares,
+      processed_at
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
+    ON CONFLICT (sha256) DO NOTHING
+    RETURNING id
+  `;
 
-  return { fileName, description, hash, embedding };
+  const values = [
+    pacienteId || null,
+    fileName,
+    dest,
+    hash,
+    description,
+    JSON.stringify(embedding),
+    diagnostico.classificacao_sugerida,
+    diagnostico.confianca,
+    JSON.stringify(diagnostico.lesoes_similares),
+  ];
+
+  const result = await pool.query(query, values);
+
+  console.log("✅ Imagem processada:", fileName);
+  console.log(`📋 Diagnóstico: ${diagnostico.classificacao_sugerida} (${(diagnostico.confianca * 100).toFixed(1)}% confiança)`);
+
+  return {
+    id: result.rows[0]?.id,
+    fileName,
+    description,
+    hash,
+    embedding,
+    diagnostico: {
+      classificacao_sugerida: diagnostico.classificacao_sugerida,
+      confianca: diagnostico.confianca,
+      lesoes_similares: diagnostico.lesoes_similares,
+      distribuicao: diagnostico.distribuicao,
+      justificativa: diagnostico.justificativa,
+    }
+  };
 }
 
 

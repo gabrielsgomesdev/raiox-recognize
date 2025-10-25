@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  # PostgreSQL with pgvector extension
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: raiox-postgres
+    environment:
+      POSTGRES_USER: raiox_user
+      POSTGRES_PASSWORD: raiox_password_dev
+      POSTGRES_DB: raiox_recognize
+      # PostgreSQL configuration
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+    ports:
+      - "5432:5432"
+    volumes:
+      # Persistent data
+      - postgres_data:/var/lib/postgresql/data
+      # Migration scripts (executed in alphabetical order)
+      - ./migrations:/docker-entrypoint-initdb.d
+      # Custom PostgreSQL configuration (optional)
+      # - ./postgres.conf:/etc/postgresql/postgresql.conf
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U raiox_user -d raiox_recognize"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - raiox-network
+
+  # pgAdmin (optional - database management UI)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: raiox-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@raiox.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - raiox-network
+    profiles:
+      - tools # Only start with: docker-compose --profile tools up
+
+volumes:
+  postgres_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  raiox-network:
+    driver: bridge

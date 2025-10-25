@@ -1,0 +1,10 @@
+# Ignore all CSV files except examples
+*.csv
+!*_example.csv
+
+# Ignore SQL dumps
+*.sql
+
+# Ignore backup files
+*.bak
+*.backup
